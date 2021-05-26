@@ -93,3 +93,5 @@ test = runEmulatorTraceIO $ do
     callEndpoint @"mint" h1 tn
     callEndpoint @"mint" h2 tn
     void $ Emulator.waitNSlots 1
+    callEndpoint @"mint" h2 tn
+    void $ Emulator.waitNSlots 1

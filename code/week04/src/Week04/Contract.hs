@@ -18,7 +18,7 @@ import Wallet.Emulator.Wallet
 
 myContract1 :: Contract () BlockchainActions Text ()
 myContract1 = do
-    void $ Contract.throwError "BOOM!"
+    void (Contract.throwError "BOOM!")
     Contract.logInfo @String "Hello from the contract!"
 
 myTrace1 :: EmulatorTrace ()

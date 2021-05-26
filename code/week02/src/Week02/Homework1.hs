@@ -32,23 +32,30 @@ import           Text.Printf          (printf)
 {-# INLINABLE mkValidator #-}
 -- This should validate if and only if the two Booleans in the redeemer are equal!
 mkValidator :: () -> (Bool, Bool) -> ValidatorCtx -> Bool
-mkValidator _ _ _ = True -- FIX ME!
+mkValidator () (b1, b2) _ = traceIfFalse "redeemer doesn't have 2 trues" $ b1 && b2
+-- Or do this: mkValidator () (b1, b2) _ = b1 && b2
 
 data Typed
 instance Scripts.ScriptType Typed where
+    type instance DatumType Typed = ()
+    type instance RedeemerType Typed = (Bool, Bool)
 -- Implement the instance!
 
 inst :: Scripts.ScriptInstance Typed
-inst = undefined -- FIX ME!
+inst = Scripts.validator @Typed
+    $$(PlutusTx.compile [|| mkValidator ||])
+    $$(PlutusTx.compile [|| wrap ||])
+  where
+    wrap = Scripts.wrapValidator @() @(Bool, Bool)
 
 validator :: Validator
-validator = undefined -- FIX ME!
+validator = Scripts.validatorScript inst -- FIX ME!
 
 valHash :: Ledger.ValidatorHash
-valHash = undefined -- FIX ME!
+valHash = Scripts.validatorHash validator -- FIX ME!
 
 scrAddress :: Ledger.Address
-scrAddress = undefined -- FIX ME!
+scrAddress = ScriptAddress valHash -- FIX ME!
 
 type GiftSchema =
     BlockchainActions
@@ -83,3 +90,4 @@ endpoints = (give' `select` grab') >> endpoints
 mkSchemaDefinitions ''GiftSchema
 
 mkKnownCurrencies []
+

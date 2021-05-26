@@ -9,6 +9,17 @@
 {-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE TypeFamilies        #-}
 {-# LANGUAGE TypeOperators       #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE DeriveAnyClass      #-}
+{-# LANGUAGE DeriveGeneric       #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE NoImplicitPrelude   #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell     #-}
+{-# LANGUAGE TypeApplications    #-}
+{-# LANGUAGE TypeFamilies        #-}
+{-# LANGUAGE TypeOperators       #-}
 
 module Week03.Homework1 where
 
@@ -43,7 +54,18 @@ PlutusTx.unstableMakeIsData ''VestingDatum
 -- This should validate if either beneficiary1 has signed the transaction and the current slot is before or at the deadline
 -- or if beneficiary2 has signed the transaction and the deadline has passed.
 mkValidator :: VestingDatum -> () -> ScriptContext -> Bool
-mkValidator _ _ _ = False -- FIX ME!
+mkValidator dat () ctx =  
+    traceIfFalse "benefactor cannot claim now" checkBenefactorSig   ||
+    traceIfFalse "beneficiary cannot claim now" checkBeneficiarySig
+  where
+    info :: TxInfo
+    info = scriptContextTxInfo ctx
+
+    checkBenefactorSig :: Bool
+    checkBenefactorSig = beneficiary1 dat `elem` txInfoSignatories info && to (deadline dat) `contains` txInfoValidRange info
+
+    checkBeneficiarySig :: Bool
+    checkBeneficiarySig = beneficiary2 dat `elem` txInfoSignatories info && from (deadline dat) `contains` txInfoValidRange info
 
 data Vesting
 instance Scripts.ScriptType Vesting where
@@ -131,3 +153,5 @@ endpoints = (give' `select` grab') >> endpoints
 mkSchemaDefinitions ''VestingSchema
 
 mkKnownCurrencies []
+
+
